@@ -1,0 +1,95 @@
+# ============================================================================
+# Model Router adaptativo para Kimi Code CLI — configuración de ejemplo
+#
+# Requisitos:
+#   1. Node.js >= 24.15 y pnpm 10.33 (ver package.json del repo).
+#   2. Kimi Code compilado desde este repositorio (la feature no está en
+#      las builds publicadas): `pnpm install && pnpm -C apps/kimi-code run dev`
+#      o `pnpm build` y usar el binario resultante.
+#
+# Activación:
+#   - Flag experimental (obligatorio): variable de entorno
+#       KIMI_CODE_EXPERIMENTAL_MODEL_ROUTER=1
+#     o tabla [experimental] en config.toml:
+#       [experimental]
+#       model_router = true
+#   - Sección [model_router].enabled = true (abajo).
+#
+# Los alias de modelo DEBEN existir en tu [models] y estar disponibles en tu
+# cuenta (los mismos que verías con /model). Sustituye los valores de ejemplo
+# por alias reales de tu configuración.
+# ============================================================================
+
+[model_router]
+
+# Activa el enrutamiento. Sin este flag y sin enabled, Kimi Code comporta
+# exactamente como siempre (comportamiento original).
+enabled = true
+
+# Modo de simulación: clasifica y registra la decisión en
+# <sessionDir>/model-router.jsonl pero NO cambia el modelo.
+# Útil para evaluar la política antes de confiar en ella.
+simulation = false
+
+# Si el usuario elige un modelo explícitamente con /model, el router no lo
+# sobrescribe nunca. Ponlo a false solo si quieres que la clasificación
+# automática prevalezca sobre la elección manual.
+respect_user_choice = true
+
+# Máximo de escaladas por turno cuando un modelo falla (evita bucles).
+max_escalations_per_turn = 1
+
+# Si la clasificación es incierta (sin señales claras), sube un nivel.
+round_up_when_uncertain = true
+
+# Tamaño máximo del log JSONL local por sesión antes de rotar (bytes).
+log_max_bytes = 5242880
+
+# Palabras clave adicionales de riesgo (fuerzan al menos T2).
+# La lista integrada ya cubre auth, seguridad, persistencia, concurrencia, etc.
+# risk_keywords = ["mi_tarea_critica"]
+
+[model_router.subagents]
+# Enrutado automático de subagentes (Agent / AgentSwarm) por dificultad.
+# Requiere además un pool en [secondary_model] (abajo).
+enabled = true
+
+# ----------------------------------------------------------------------------
+# Niveles T0-T3 -> alias de [models]. Elige el MENOR modelo adecuado para cada
+# nivel según los modelos que TU cuenta tenga habilitados. No hay datos de
+# coste aquí: tú decides qué alias va a cada nivel.
+# ----------------------------------------------------------------------------
+[model_router.tiers.T0]
+model = "kimi-code/kimi-for-coding-highspeed"   # mecánico: búsquedas, renombrados
+
+[model_router.tiers.T1]
+model = "kimi-code/kimi-for-coding"             # normal: correcciones acotadas
+
+[model_router.tiers.T2]
+model = "kimi-code/k3"                          # complejo: concurrencia, rendimiento
+effort = "high"
+
+[model_router.tiers.T3]
+model = "kimi-code/k3"                          # crítico: arquitectura, ambigüedad
+effort = "max"
+
+# ----------------------------------------------------------------------------
+# Pool de subagentes (selector ya existente de Kimi Code). Los subagentes
+# reciben el alias del nivel clasificado si está en este pool; si no, usan
+# default_model. Si force = true, el router no toca nada (manda el pool).
+# ----------------------------------------------------------------------------
+[secondary_model]
+default_model = "kimi-code/kimi-for-coding"
+
+[secondary_model.models]
+"kimi-code/kimi-for-coding" = "Balanced workhorse for everyday subtasks [default]"
+"kimi-code/kimi-for-coding-highspeed" = "Fast model for trivial lookups and summaries"
+"kimi-code/k3" = "Strong model for hard subtasks: deep debugging, design"
+
+# ----------------------------------------------------------------------------
+# Verificación:
+#   1. Inicia una sesión: verás el flag activo en /experiments.
+#   2. Pide algo trivial ("find where X is defined") y revisa
+#      <sessionDir>/model-router.jsonl (ruta en la salida de /status).
+#   3. Con simulation = true el log registra la decisión sin cambiar modelo.
+# ----------------------------------------------------------------------------

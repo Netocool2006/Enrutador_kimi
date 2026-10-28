@@ -58,6 +58,7 @@ import type {
   BindAgentInput,
   ProfileBindingSnapshot,
   ProfileData,
+  ProfileModelChangeSource,
   ProfileModelContext,
   ProfileServiceOptions,
   ProfileSetModelResult,
@@ -150,6 +151,7 @@ export class AgentProfileService extends Disposable implements IAgentProfileServ
 
   private frozenSkillListing: string | undefined;
   private frozenPluginSections: string | undefined;
+  private modelChangeSource: ProfileModelChangeSource = 'startup';
 
   constructor(
     @IEventDispatcher private readonly dispatcher: IEventDispatcher,
@@ -192,7 +194,7 @@ export class AgentProfileService extends Disposable implements IAgentProfileServ
           this.modelAlias === undefined
             ? undefined
             : this.discovery.retiredModelReplacement(this.modelAlias);
-        if (replacement !== undefined) await this.setModel(replacement).catch(() => {});
+        if (replacement !== undefined) await this.setModel(replacement, 'migration').catch(() => {});
         this.syncTelemetryModelContext(this.modelAlias);
         await this.refreshBoundSubagentAllowlist();
         await next();
@@ -212,7 +214,7 @@ export class AgentProfileService extends Disposable implements IAgentProfileServ
     );
     this._register(
       this.discovery.onDidRetireModel(({ from, to }) => {
-        if (this.modelAlias === from) void this.setModel(to).catch(() => {});
+        if (this.modelAlias === from) void this.setModel(to, 'migration').catch(() => {});
       }),
     );
   }
@@ -395,7 +397,7 @@ export class AgentProfileService extends Disposable implements IAgentProfileServ
     this.publishToolPatternWarnings(profile);
   }
 
-  async setModel(alias: string): Promise<ProfileSetModelResult> {
+  async setModel(alias: string, source: ProfileModelChangeSource = 'user'): Promise<ProfileSetModelResult> {
     const model = this.modelCatalog.get(alias);
     if (this.profileName === undefined) {
       await this.bind({ profile: DEFAULT_AGENT_PROFILE_NAME, model: alias });
@@ -404,10 +406,15 @@ export class AgentProfileService extends Disposable implements IAgentProfileServ
       this.update({ modelAlias: alias });
       this.telemetry.track2('model_switch', { model: alias });
     }
+    this.modelChangeSource = source;
     return {
       model: alias,
       providerName: model.providerName,
     };
+  }
+
+  getModelChangeSource(): ProfileModelChangeSource {
+    return this.modelChangeSource;
   }
 
   setThinking(level: string): void {

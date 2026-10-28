@@ -103,6 +103,8 @@ export interface ProfileSetModelResult {
   readonly providerName?: string | undefined;
 }
 
+export type ProfileModelChangeSource = 'startup' | 'user' | 'router' | 'migration' | 'spawn';
+
 export interface BindAgentInput {
   readonly profile: string;
   readonly model?: string;
@@ -117,10 +119,11 @@ export interface IAgentProfileService {
   update(changed: ProfileUpdateData): void;
   applyBindingSnapshot(snapshot: ProfileBindingSnapshot): void;
   bind(input: BindAgentInput): Promise<void>;
-  setModel(model: string): Promise<ProfileSetModelResult>;
+  setModel(model: string, source?: ProfileModelChangeSource): Promise<ProfileSetModelResult>;
   setThinking(level: string): void;
   republishStatus(): void;
   getModel(): string;
+  getModelChangeSource(): ProfileModelChangeSource;
   useProfile(profile: ResolvedAgentProfile, context: SystemPromptContext): void;
   applyProfile(profile: ResolvedAgentProfile, options?: ApplyProfileOptions): Promise<void>;
   getAgentsMdWarning(): string | undefined;

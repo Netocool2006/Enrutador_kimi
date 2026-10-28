@@ -1,7 +1,44 @@
-# Kimi Code CLI
+# Enrutador_kimi
+
+Fork de [Kimi Code CLI](https://github.com/MoonshotAI/kimi-code) con un **Model Router adaptativo** que clasifica cada tarea por dificultad (T0–T3) y asigna el modelo adecuado antes de ejecutarla, para ahorrar consumo del modelo más potente sin degradar la calidad.
 
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE) [![Docs](https://img.shields.io/badge/docs-online-blue)](https://moonshotai.github.io/kimi-code/en/) <br>
 [Documentation](https://moonshotai.github.io/kimi-code/en/) · [Issues](https://github.com/MoonshotAI/kimi-code/issues) · [中文](README.zh-CN.md)
+
+## Model Router (feature de este fork)
+
+Nueva feature experimental en `packages/agent-core-v2/src/features/modelRouter/`:
+
+- **Enrutado del agente principal**: cada prompt del usuario se clasifica (T0 mecánico · T1 normal · T2 complejo · T3 crítico) y el modelo cambia **antes** de que arranque el turno, usando el mismo mecanismo oficial que `/model` (`session.setModel`). El historial de la sesión se conserva.
+- **Escalada acotada**: si el turno falla, sube un nivel de tier (máx. `max_escalations_per_turn`) y reintenta; nunca entra en bucle y nunca pisa una elección explícita de modelo hecha por el usuario (`/model`).
+- **Subagentes**: `Agent`/`AgentSwarm` reciben el alias del pool `[secondary_model]` según la complejidad de la subtarea; el parámetro `model` explícito siempre gana.
+- **Métricas locales**: cada decisión se registra en `<sessionDir>/model-router.jsonl` (tier, modelo, motivo, modelo anterior). Sin telemetría externa ni APIs de pago nuevas.
+- **Modo simulación** (`simulation = true`) para evaluar decisiones sin cambiar el modelo, y desactivación total restaurando el comportamiento original.
+
+Activación (ver [`model-router.example.toml`](./model-router.example.toml)):
+
+```toml
+[experimental]
+model_router = true
+
+[model_router]
+enabled = true
+
+[model_router.tiers.T0]
+model = "kimi-code/kimi-for-coding-highspeed"
+# ... T1, T2, T3 con alias de TU [models]
+```
+
+```bash
+export KIMI_CODE_EXPERIMENTAL_MODEL_ROUTER=1   # Windows: set KIMI_CODE_EXPERIMENTAL_MODEL_ROUTER=1
+pnpm -C apps/kimi-code run dev:cli-only
+```
+
+Todos los alias deben existir en tu `[models]` y estar habilitados en tu cuenta. Pruebas: `pnpm --filter @moonshot-ai/agent-core-v2 exec vitest run test/features/modelRouter/`.
+
+---
+
+# Kimi Code CLI (upstream)
 
 ![Demo of using Kimi Code](./docs/media/intro.gif)
 

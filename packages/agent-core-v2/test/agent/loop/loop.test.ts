@@ -2308,6 +2308,7 @@ describe('aborted step tool execution', () => {
     const requester: IAgentLLMRequesterService = {
       _serviceBrand: undefined,
       prepareTurnConfig: () => ({ thinkingEffort: 'off' }),
+      invalidateTurnConfig: () => {},
       currentCredentialProvider: rejectingCredentials,
       credentialProviderForTurn: rejectingCredentials,
       lastTurnRequest: () => undefined,
@@ -2389,6 +2390,7 @@ function createTimingRequester(): IAgentLLMRequesterService {
   const requester: IAgentLLMRequesterService = {
     _serviceBrand: undefined,
     prepareTurnConfig: () => ({ thinkingEffort: 'off' }),
+    invalidateTurnConfig: () => {},
     currentCredentialProvider: () => undefined,
     credentialProviderForTurn: () => undefined,
     lastTurnRequest: () => undefined,

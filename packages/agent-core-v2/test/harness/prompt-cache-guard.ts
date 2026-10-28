@@ -71,6 +71,10 @@ export class PromptCacheGuardedLLMRequesterService implements IAgentLLMRequester
     return this.inner.prepareTurnConfig(turnId);
   }
 
+  invalidateTurnConfig(turnId: number): void {
+    this.inner.invalidateTurnConfig(turnId);
+  }
+
   currentCredentialProvider(): LlmCredentialProvider | undefined {
     return this.inner.currentCredentialProvider();
   }

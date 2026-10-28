@@ -51,6 +51,7 @@ import {
 } from '#/app/agentProfileCatalog/profile-shared';
 import { ILogService } from '#/_base/log/log';
 import { hasPinnedPermissionMode } from '#/features/tower/tower';
+import { IAgentModelRouterService } from '#/features/modelRouter/routerService';
 import { IConfigService } from '#/app/config/config';
 import { IFlagService } from '#/app/flag/flag';
 import { IAgentLifecycleService } from '#/session/agentLifecycle/agentLifecycle';
@@ -143,6 +144,7 @@ export class SubagentTool implements ISubagentTool {
     @IConfigService private readonly config: IConfigService,
     @IFlagService private readonly flags: IFlagService,
     @AgentToolContribution private readonly contributions: CollectionView<AgentToolContribution>,
+    @IAgentModelRouterService private readonly modelRouter: IAgentModelRouterService,
   ) {
     this.callerAgentId = scopeContext.agentId;
     this.canRunInBackground = () =>
@@ -346,10 +348,11 @@ export class SubagentTool implements ISubagentTool {
       profileName = resumed.profileName ?? RESUMED_LABEL;
       displayModel = resumed.modelAlias;
     } else {
+      const routedModel = this.modelRouter.routeSubagent(args.prompt, args.model);
       const plan = await this.subagents.planSpawn({
         callerAgentId: this.callerAgentId,
         profileName: args.subagent_type,
-        model: args.model,
+        model: routedModel,
         fork: args.fork === true,
       });
       const spawned = await this.subagents.spawn({

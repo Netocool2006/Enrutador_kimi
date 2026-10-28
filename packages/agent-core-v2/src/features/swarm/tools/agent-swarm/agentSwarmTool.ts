@@ -12,6 +12,7 @@ import { IFlagService } from '#/app/flag/flag';
 import { ISessionSwarmService, type SessionSwarmTask } from '#/features/swarm/session/sessionSwarm';
 import { IAgentProfileService } from '#/agent/profile/profile';
 import { IAgentScopeContext } from '#/agent/scopeContext/scopeContext';
+import { IAgentModelRouterService } from '#/features/modelRouter/routerService';
 import { IAgentSwarmService } from '#/features/swarm/agent/swarm';
 import { resolveSwarmTimeoutMs } from '#/features/swarm/configSection';
 import { ISessionSubagentService } from '#/session/subagent/subagent';
@@ -99,6 +100,7 @@ export class AgentSwarmTool implements IAgentSwarmTool {
     @IFlagService private readonly flags: IFlagService,
     @ISessionSubagentService private readonly subagents: ISessionSubagentService,
     @IAgentProfileService private readonly profile: IAgentProfileService,
+    @IAgentModelRouterService private readonly modelRouter: IAgentModelRouterService,
   ) {
     this.callerAgentId = scopeContext.agentId;
   }
@@ -158,11 +160,12 @@ export class AgentSwarmTool implements IAgentSwarmTool {
     if (fork && Object.keys(args.resume_agent_ids ?? {}).length > 0) {
       throw new Error2(ErrorCodes.VALIDATION_FAILED, FORK_WITH_RESUME_UNAVAILABLE);
     }
+    const routedModel = this.modelRouter.routeSubagent(swarmTaskText(args), args.model);
     let plan: SubagentSpawnPlan | undefined;
     if ((args.items?.length ?? 0) > 0) {
       if (fork) {
         const incompatible = forkIncompatibility(
-          { subagent_type: args.subagent_type, model: args.model },
+          { subagent_type: args.subagent_type, model: routedModel },
           this.profile.data(),
         );
         if (incompatible !== undefined) {
@@ -172,7 +175,7 @@ export class AgentSwarmTool implements IAgentSwarmTool {
       plan = await this.subagents.planSpawn({
         callerAgentId: this.callerAgentId,
         profileName: args.subagent_type,
-        model: args.model,
+        model: routedModel,
         fork,
       });
     }
@@ -340,6 +343,10 @@ function normalizeOptionalString(value: string | undefined): string | undefined 
   if (value === undefined) return undefined;
   const trimmed = value.trim();
   return trimmed.length > 0 ? trimmed : undefined;
+}
+
+function swarmTaskText(args: AgentSwarmToolInput): string {
+  return [args.description, ...(args.items ?? [])].filter((part) => part.trim() !== '').join('\n');
 }
 
 function renderSwarmSummary(completed: number, failed: number, aborted = 0): string {

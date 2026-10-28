@@ -216,6 +216,10 @@ export class AgentLLMRequesterService implements IAgentLLMRequesterService {
     return { thinkingEffort: config.resolved.thinkingLevel };
   }
 
+  invalidateTurnConfig(turnId: number): void {
+    this.turnConfigs.delete(turnId);
+  }
+
   currentCredentialProvider(): LlmCredentialProvider | undefined {
     if (!this.profile.hasProvider()) return undefined;
     return this.modelCatalog.get(this.profile.resolveModelContext().modelAlias).credentialProvider;

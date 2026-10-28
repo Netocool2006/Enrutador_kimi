@@ -8,7 +8,7 @@
 # commented "# field: type" lines describe the remaining schema fields.
 # Values resolve as: default -> config.toml -> env overlay -> memory.
 
-# Index (29 sections · 2 overlay(s))
+# Index (30 sections · 2 overlay(s))
 #   background               src/agent/task/configSection.ts
 #   builtinProductSkills     src/features/skill/catalog/configSection.ts
 #   cron                     src/features/cron/configSection.ts
@@ -25,6 +25,7 @@
 #   mcp                      src/app/mcpConfig/configSection.ts
 #   mergeAllAvailableSkills  src/features/skill/catalog/configSection.ts
 #   modelCatalog             src/app/kosongConfig/configSection.ts
+#   modelRouter              src/features/modelRouter/configSection.ts
 #   models                   src/app/kosongConfig/configSection.ts
 #   permission               src/agent/permissionRules/configSection.ts
 #   providers                src/app/kosongConfig/configSection.ts
@@ -258,6 +259,38 @@ merge_all_available_skills = true
 [model_catalog]
 # refresh_interval_ms: integer
 # refresh_on_start: boolean
+
+# ##########################################################################
+# modelRouter (config.toml: model_router)
+#   owner: src/features/modelRouter/configSection.ts
+#   scope: core
+# ##########################################################################
+
+[model_router]
+# enabled: boolean
+# simulation: boolean
+# respect_user_choice: boolean
+# max_escalations_per_turn: integer
+# round_up_when_uncertain: boolean
+# log_max_bytes: integer
+# risk_keywords: string[]
+
+# [model_router.subagents]
+  # enabled: boolean
+
+# [model_router.tiers]
+  # _t0: object
+    # model: string
+    # effort: string
+  # _t1: object
+    # model: string
+    # effort: string
+  # _t2: object
+    # model: string
+    # effort: string
+  # _t3: object
+    # model: string
+    # effort: string
 
 # ##########################################################################
 # models

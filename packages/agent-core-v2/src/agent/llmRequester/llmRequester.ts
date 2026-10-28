@@ -75,6 +75,8 @@ export interface IAgentLLMRequesterService {
 
   prepareTurnConfig(turnId: number): PreparedTurnRequestConfig | undefined;
 
+  invalidateTurnConfig(turnId: number): void;
+
   currentCredentialProvider(): LlmCredentialProvider | undefined;
 
   credentialProviderForTurn(turnId: number): LlmCredentialProvider | undefined;
